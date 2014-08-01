@@ -148,7 +148,7 @@ def csv_to_sqldb(sqldb, infilename, table_name):
     dialect = csv.Sniffer().sniff(open(infilename, "rt").readline())
     inf = csv.reader(open(infilename, "rt"), dialect)
     column_names = inf.next()
-    colstr = ",".join(column_names)
+    colstr = ",".join("[{0}]".format(col) for col in column_names)
     try:
         sqldb.execute("drop table %s;" % table_name)
     except:
