@@ -1,0 +1,22 @@
+Metadata-Version: 1.0
+Name: querycsv
+Version: 0.3.0.0
+Summary: Execute SQL code against data contained in one or more comma-separated-value (CSV) files.
+Home-page: none
+Author: Dreas Nielsen
+Author-email: dreas.nielsen@gmail.com
+License: UNKNOWN
+Description: ``querycsv.py`` is a Python module and program
+        that executes SQL code against data contained in one or more
+        comma-separated-value (CSV) files. The output of the SQL query will be
+        displayed on the console by default, but may be saved in a new CSV file.
+        
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Text Processing :: General
+Classifier: Topic :: Office/Business

@@ -1,0 +1,289 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>querycsv -- Query a CSV File</title>
+<style type="text/css">
+html, body {
+	padding: 0;
+	margin: 0;
+	font-family: Arial, Helvetica, sans-serif;
+	color: black;
+	/*background-color: #FFEBCD;*/
+	background-color: rgb(242, 236, 209);
+}
+div#topheader {
+	position: absolute;
+	top: 0; left: 10%; width: 65%;
+	background-color: #FFE4B5;
+	background-color: rgb(228, 215, 152);
+	border-bottom: 4px solid #814324;
+	border-left: 4px solid #814324;
+	border-right: 4px solid #814324;
+	height: 6em;
+	}
+div#title {
+	position: relative;
+	top: 0.5em; left: 5%; width: 75%;
+	padding: 0.5em 3em 0.5em 0em;
+	text-align: center;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 1.5em;
+	font-weight: bold;
+	word-spacing: 0.05em;
+	color: #814324;
+	background-color: rgb(250, 250, 210);
+	border: 1px solid #814324;
+	filter: alpha(opacity=80);
+	opacity: 0.8;
+	}
+div#subtitle {
+	position: absolute;
+	bottom: 0.5em; width: 100%;
+	text-align: center;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 0.8em;
+	font-weight: bold;
+	color: #814324;
+	}
+#content {
+	margin: 5.5em 20px 0 20px;
+	}
+p {
+	text-indent: 2em;
+	margin: 0.2em; 0 0 0;
+	word-spacing: 0.05em;
+	max-width: 60em;
+	}
+p.initial {
+	text-indent: 0;
+	margin: 0 0;
+	}
+table {
+	margin: 1em 40px;
+	}
+td, th {
+	padding: 0 10px;
+	}
+div.code {
+	margin: 0.5em 2em;
+	padding: 0.25em 0.25em;
+	border: 1px dotted rgb(123, 108, 34);
+	font-family: "Courier New", Courier, fixed;
+	font-size: 0.9em;
+	/*background-color: rgb(250, 250, 210);*/
+	background-color: rgb(252, 252, 226);
+	/*color: rgb(129, 113, 36);*/
+	color: rgb(123, 108, 34);
+	white-space: pre;
+	}
+span.code {
+	font-family: "Courier New", Courier, fixed;
+	}
+</style>
+</head>
+<body>
+<div id="topheader"><div id="subtitle">Execute SQL on CSV files</div></div>
+<div id="title">querycsv.py</div>
+<div id="content">
+<p class="initial"><span class="code">querycsv.py</span> is a Python module and program that allows you to 
+execute SQL code against data contained in one or more comma-separated-value (CSV) files.  
+The output of the SQL query will be displayed on the console by default, but may be saved in a new 
+CSV file.</p>
+
+<h2>Capabilities</h2>
+
+<p class="initial">Actions that can be performed with the <span class="code">querycsv</span>
+program include:</p>
+
+<ul><li>Execute a single SQL statement, specified on the command line, against the specified data.</li>
+
+<li>Execute multiple SQL statements, read from a script file, against the specified data.</li>
+
+<li>Read data either from one or more CSV files or from a <a href="http://www.sqlite.org/">Sqlite</a>
+data file.</li>
+
+<li>Create a new CSV file containing selected, summarized, data.</li>
+
+<li>Create a Sqlite data file from one or more CSV files.  The Sqlite file can then be used either by
+<span class="code">querycsv</span> or by other programs, such as the
+<a href="http://www.initd.org/tracker/pysqlite/wiki/SnippetsShell">Python Sqliteplus shell</a>.</li>
+</ul>
+
+<h2>Syntax and Options</h2>
+<div class="code">    querycsv.py -i &lt;fname&gt; [other options] [SELECT_stmt]
+
+Options:
+   -i &lt;fname&gt; Input CSV file name.
+              Multiple -i options can be used to specify more than one input file.
+   -u &lt;fname&gt; Use the specified sqlite file for input.
+              Options -i, -f, and -k are ignored if -u is specified
+   -o &lt;fname&gt; Send output to the named CSV file.
+   -s         Execute a SQL script from the file given as the argument.
+   -f &lt;fname&gt; Use a sqlite file instead of memory for intermediate storage.
+   -k         Keep the sqlite file when done (only valid with -f).
+   -h         Print this help and exit.
+</div>
+
+<h2>Notes</h2>
+<ol><li>The first line of each input (CSV) file must contain column names</li>
+
+<li>Table names used in the SQL should match the input CSV file names, without either the
+leading path or the trailing filename extension.</li>
+
+<li>When multiple input files (or a sqlite file with multiple tables) are used, SQL JOIN clauses can be used
+to combine the data.</li>
+
+<li>When a SQL script file is used instead of a single SQL commmand on the command line, only
+the output of the last SQL command will be displayed.</li>
+
+<li>Output to the console (the default) is formatted for readability.  Output to a disk file
+is formatted as CSV, with commas delimiting columns and double quotes around strings.</li>
+
+<li>The primary intended purpose of a command-line SQL statement is to execute 
+a SELECT or UNION statement against the data, and UPDATE and INSERT statements do not have any
+effect on input CSV file(s).  An effect
+equivalent to an UPDATE statement can be achieved with SELECT statements, however, with output
+directed to a new CSV file.  To perform an INSERT opertation it is necessary to either save the
+data in a Sqlite file or to use a script file with separate INSERT and SELECT statements.</li>
+
+<li>The SQL language features that can be used with <span class="code">querycsv</span> are those 
+supported by <a href="http://www.sqlite.org/lang.html">the Sqlite language</a>.</li>
+</ol>
+
+<h2>Examples</h2>
+
+<p class="initial">Given an input data file named <span class="code">testdata.csv</span> that 
+looks like this:</p>
+
+<div class="code">"location_id","sample_date","sample_id","material","analyte","value","units","meas_basis","quals"
+"RM708B1","2005-04-07 00:00:00","05144404","Sediment","Aluminum","7310","mg/kg","dry",""
+"RM708B1","2005-04-07 00:00:00","05144404","Sediment","Antimony","6.2","mg/kg","dry","UJ"
+"RM708B1","2005-04-07 00:00:00","05144404","Sediment","Arsenic","3.9","mg/kg","dry","U"
+"RM708B1","2005-04-07 00:00:00","05144404","Sediment","Barium","101","mg/kg","dry",""
+"RM708B1","2005-04-07 00:00:00","05144404","Sediment","Beryllium","0.36","mg/kg","dry","J"
+"RM708B1","2005-04-07 00:00:00","05144404","Sediment","Cadmium","1.6","mg/kg","dry",""
+ . . .
+ . . 
+ .
+</div>
+
+<p class="initial">following are several examples of how <span class="code">querycsv</span> could be used.</p>
+
+<h3>Run a simple SELECT statement to extract and display data</h3>
+
+<p class="initial">The code
+<div class="code">querycsv.py -i testdata.csv "select distinct analyte from testdata;"
+</div>
+<p class="initial">will produce output like the following.</p>
+<div class="code"> analyte
+===========
+ Aluminum
+ Antimony
+ Arsenic
+ Barium
+ Beryllium
+ Cadmium
+ . . .
+ . .
+ .
+</div>
+ 
+<h3>Run a simple SELECT statement to extract data into a new CSV file</h3>
+ 
+<p class="initial">The code</p>
+<div class="code">querycsv.py -i testdata.csv -o maxconc.csv "select analyte, max(value) from testdata group by analyte;"
+</div>
+<p class="initial">will create a new CSV file named "maxconc.csv" with the following contents.</p>
+<div class="code">"analyte","max(value)"
+"Aluminum","7310"
+"Antimony","7.9"
+"Arsenic","6.8"
+"Barium","863"
+"Beryllium","1.4"
+"Cadmium","4.7"
+ . . .
+ . .
+ .
+</div>
+
+<h3>Execute multiple SQL statements using a script file</h3>
+
+<p class="initial">To view the number of samples for which each analyte has been measured
+in the given data file, the following SQL commands could be used.</p>
+
+<div class="code">create view v_sampanal as
+select distinct sample_id, analyte from testdata;
+
+select analyte, count(sample_id) as num_samps
+from v_sampanal
+group by analyte;
+</div>
+
+<p class="initial">If these commands were saved in a text file named "sampcount.sql", the the following code</p>
+
+<div class="code">querycsv.py -i testdata.csv -s sampcount.sql"</div>
+
+<p class="initial">would produce output like the following.</p>
+
+<div class="code"> analyte   | num_samps
+=======================
+ Aluminum  | 5
+ Antimony  | 5
+ Arsenic   | 5
+ Barium    | 5
+ Beryllium | 5
+ Cadmium   | 5
+ . . .
+ . .
+ .
+</div>
+
+<p class="initial">Note that this is a contrived example, as the same result could be obtained
+with a single command as follows.</p>
+
+<div class="code">querycsv.py -i testdata.csv "select analyte, count(sample_id) as num_samps
+from (select distinct sample_id, analyte from testdata) group by analyte;"
+</div>
+
+<p class="initial">Script files can be useful for solving more complex querying problems, however.
+Note that only the output of the last SQL command in a script file is displayed, so that if
+input is taken from a Sqlite file, and a view is created (as in the example script above),
+then a command to drop the view should not be the last command in the script file.</p>
+
+<p>The end of each SQL command in the script file is identified by a line that ends with a semicolon.
+Comment lines are distinguished by two dashes ("--") at the beginning of a line.  No more
+sophisticated parsing or interpretation of the SQL commands is done, so comments and SQL
+commands should not be placed on the same line, nor should two different SQL commands
+be put on the same line.</p>
+ 
+ <h3>Create and use a Sqlite file</h3>
+ 
+ <p class="initial">The "-f" and "-k" options can be used to create a Sqlite file, as follows.</p>
+ 
+ <div class="code">querycsv.py -i testdata.csv -f testdata.sqlite -k "select * from testdata.csv limit 1;"</div>
+ 
+ <p class="initial">The SQL command used in the previous command line may or may not produce
+ useful output, but it must be present.</p>
+ <p class="initial">The Sqlite file that was created can then be used as follows.</p>
+ 
+ <div class="code">querycsv.py -u testdata.sqlite "select distinct location_id from testdata;"</div>
+ 
+ <p class="initial">Note that the name(s) of the table(s) in the Sqlite file must be known; they will
+ not necessarily match the name of the Sqlite file.</p>
+
+<h2>Copyright and License</h2>
+<p class="initial">Copyright (c) 2008, R.Dreas Nielsen</p>
+<p>This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+The GNU General Public License is available at 
+<a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.</p>
+</ol>
+</div>
+</body>
+</html>
