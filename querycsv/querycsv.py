@@ -79,7 +79,7 @@ def quote_list_as_str(arr):
 # pp() function by Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
 # modified version
 # Taken from sqliteplus.py by Florent Xicluna
-def pp(cursor):
+def pretty_print(cursor):
     rows = cursor.fetchall()
     desc = cursor.description
     if not desc:
@@ -107,30 +107,16 @@ def read_sqlfile(filename):
     #    1. Lines that start with "--" are comments.
     #    2. Lines that end with ";" terminate a SQL statement.
     sqlfile = open(filename, "rt")
-    sqllist = []
+    sqlcmds = []
     currcmd = ''
     for line in sqlfile:
         line = line.strip()
         if len(line) > 0 and not (len(line) > 1 and line[:2] == "--"):
             currcmd = "%s %s" % (currcmd, line)
             if line[-1] == ';':
-                sqllist.append(currcmd.strip())
+                sqlcmds.append(currcmd.strip())
                 currcmd = ''
-    return sqllist
-
-
-def execute_sql(db, sqllist, outfile=None):
-    """
-    Parameters
-    ----------
-    db: Database object that conforms to the Python DB API.
-    sqllist: List of SQL statements, to be executed in order.
-    outfile: Name of CSV file in which to dump the results of the last command.
-    """
-    curs = db.cursor()
-    for i in range(len(sqllist) - 1):
-        curs.execute(sqllist[i])
-    qsqldb(db, sqllist[len(sqllist) - 1], outfile)
+    return sqlcmds
 
 
 def csv_to_sqldb(db, filename, table_name):
@@ -150,33 +136,42 @@ def csv_to_sqldb(db, filename, table_name):
     db.commit()
 
 
-def qsqldb(sqldb, sql_cmd, outfilename=None):
+def execute_sql(conn, sqlcmds, outfilename=None):
     """
-    Run a SQL command on the specified (open) sqlite3 database,
-    and write the output.
+    Parameters
+    ----------
+    conn: Database connection that conforms to the Python DB API.
+    sqlcmds: List of SQL statements, to be executed in order.
+    outfile: Name of CSV file in which to dump the results of the last command.
     """
     # Create the output file if specified
+    outfile = None
+    csvout = None
     if outfilename:
         outfile = open(outfilename, "wb")
         csvout = csv.writer(outfile, quoting=csv.QUOTE_NONNUMERIC)
 
+    curs = conn.cursor()
+    head, tail = sqlcmds[:-1], sqlcmds[-1]
+
     # Execute SQL
-    curs = sqldb.cursor()
-    curs.execute(sql_cmd)
+    for cmd in head:
+        curs.execute(cmd)
+    curs.execute(tail)
 
     # Write output to file or console
-    if outfilename:
-        datarows = curs.fetchall()
+    if outfile:
+        rows = curs.fetchall()
         headers = [item[0] for item in curs.description]
         csvout.writerow(headers)
-        for row in datarows:
+        for row in rows:
             csvout.writerow(list(row))
         outfile.close()
     else:
-        print(pp(curs))
+        print(pretty_print(curs))
 
 
-def qsqlite(sql_cmd, sqlfilename=None, outfilename=None):
+def query_sqlite(sqlcmd, sqlfilename=None, outfilename=None):
     """
     Run a SQL command on a sqlite database in the specified file
     (or in memory if sqlfilename is None).
@@ -185,11 +180,25 @@ def qsqlite(sql_cmd, sqlfilename=None, outfilename=None):
         conn = sqlite3.connect(":memory:")
     else:
         conn = sqlite3.connect(sqlfilename)
-    qsqldb(conn, sql_cmd, outfilename)
+    execute_sql(conn, [sqlcmd], outfilename)
     conn.close()
 
 
-def qcsv(infilenames, outfilename, file_db, keep_db, sql_cmd):
+def query_sqlite_file(scriptfile, sqlfilename=None, outfilename=None):
+    """
+    Run a script of SQL commands on a sqlite database in the specified
+    file (or in memory if sqlfilename is None).
+    """
+    if not sqlfilename:
+        conn = sqlite3.connect(":memory:")
+    else:
+        conn = sqlite3.connect(sqlfilename)
+    cmds = read_sqlfile(scriptfile)
+    execute_sql(conn, cmds, outfilename)
+    conn.close()
+
+
+def query_csv(sqlcmd, infilenames, file_db, keep_db, outfilename):
     """
     Query the listed CSV files, optionally writing the output to a
     sqlite file on disk.
@@ -211,7 +220,7 @@ def qcsv(infilenames, outfilename, file_db, keep_db, sql_cmd):
         csv_to_sqldb(conn, csvfile, tablename)
 
     # Execute the SQL
-    qsqldb(conn, sql_cmd, outfilename)
+    execute_sql(conn, [sqlcmd], outfilename)
 
     # Clean up.
     conn.close()
@@ -222,21 +231,7 @@ def qcsv(infilenames, outfilename, file_db, keep_db, sql_cmd):
             pass
 
 
-def qsqlite_script(scriptfile, sqlfilename=None, outfilename=None):
-    """
-    Run a script of SQL commands on a sqlite database in the specified
-    file (or in memory if sqlfilename is None).
-    """
-    if not sqlfilename:
-        conn = sqlite3.connect(":memory:")
-    else:
-        conn = sqlite3.connect(sqlfilename)
-    cmds = read_sqlfile(scriptfile)
-    execute_sql(conn, cmds, outfilename)
-    conn.close()
-
-
-def qcsv_script(infilenames, outfilename, file_db, keep_db, scriptfile):
+def query_csv_file(scriptfile, infilenames, file_db, keep_db, outfilename):
     """
     Query the listed CSV files, optionally writing the output to a sqlite
     file on disk.
@@ -318,19 +313,20 @@ def main():
 
     if usefile:
         if execscript:
-            # 'sqlcmd' should actually be the script file name.
-            qsqlite_script(sqlcmd, usefile, outfile)
+            # sqlcmd should be the script file name
+            query_sqlite_file(sqlcmd, usefile, outfile)
         else:
-            qsqlite(sqlcmd, usefile, outfile)
+            query_sqlite(sqlcmd, usefile, outfile)
     else:
         file_db = flags.get('-f', None)
         keep_db = '-k' in flags
         csvfiles = [opt[1] for opt in optlist if opt[0] == '-i']
         if len(csvfiles) > 0:
             if execscript:
-                qcsv_script(csvfiles, outfile, file_db, keep_db, sqlcmd)
+                # sqlcmd should be the script file name
+                query_csv_file(sqlcmd, csvfiles, file_db, keep_db, outfile)
             else:
-                qcsv(csvfiles, outfile, file_db, keep_db, sqlcmd)
+                query_csv(sqlcmd, csvfiles, file_db, keep_db, outfile)
         else:
             print_help()
             sys.exit(1)
