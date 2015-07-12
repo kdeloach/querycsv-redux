@@ -276,7 +276,9 @@ def print_help():
 Copyright (c) 2008, R.Dreas Nielsen
 Licensed under the GNU General Public License version 3.
 Syntax:
-    querycsv [options] <SELECT_stmt or scriptfile_name>
+    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file> [-k]]
+        (-s <fname>|<SELECT stmt>)
+    querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
 Options:
    -i <fname> Input CSV file name.
               Multiple -i options can be used to specify more than one input
@@ -284,7 +286,7 @@ Options:
    -u <fname> Use the specified sqlite file for input.
               Options -i, -f, and -k are ignored if -u is specified
    -o <fname> Send output to the named CSV file.
-   -s         Execute a SQL script from the file given as the argument.
+   -s <fname> Execute a SQL script from the file given as the argument.
               Output will be displayed from the last SQL command in
               the script.
    -f <fname> Use a sqlite file instead of memory for intermediate storage.
@@ -292,7 +294,7 @@ Options:
    -h         Print this help and exit.
 Notes:
    1. Table names used in the SQL should match the input CSV file names,
-      without the ".csv" extensionl
+      without the ".csv" extension.
    2. When multiple input files or an existing sqlite file are used,
       the SQL can contain JOIN expressions.
    3. When a SQL script file is used instead of a single SQL command on
@@ -302,37 +304,28 @@ Notes:
 
 def main():
     optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:khs")
-    if len(arglist) == 0 or '-h' in [o[0] for o in optlist]:
+    flags = dict(optlist)
+
+    if len(arglist) == 0 or '-h' in flags:
         print_help()
         sys.exit(0)
+
+    outfile = flags.get('-o', None)
+    usefile = flags.get('-u', None)
+
+    execscript = '-s' in flags
     sqlcmd = " ".join(arglist)
-    outfile = None
-    if '-o' in [o[0] for o in optlist]:
-        optvals = [o[1] for o in optlist if o[0] == '-o']
-        if len(optvals) > 0:
-            outfile = optvals[0]
-    usefile = None
-    if '-u' in [o[0] for o in optlist]:
-        optvals = [o[1] for o in optlist if o[0] == '-u']
-        if len(optvals) > 0:
-            usefile = optvals[0]
-    execscript = '-s' in [o[0] for o in optlist]
+
     if usefile:
         if execscript:
-            qsqlite_script(sqlcmd, usefile, outfile)
             # 'sqlcmd' should actually be the script file name.
+            qsqlite_script(sqlcmd, usefile, outfile)
         else:
             qsqlite(sqlcmd, usefile, outfile)
     else:
-        file_db = None
-        if '-f' in [o[0] for o in optlist]:
-            optvals = [o[1] for o in optlist if o[0] == '-f']
-            if len(optvals) > 0:
-                file_db = optvals[0]
-        keep_db = '-k' in [o[0] for o in optlist]
-        csvfiles = []
-        if '-i' in [o[0] for o in optlist]:
-            csvfiles = [o[1] for o in optlist if o[0] == '-i']
+        file_db = flags.get('-f', None)
+        keep_db = '-k' in flags
+        csvfiles = [opt[1] for opt in optlist if opt[0] == '-i']
         if len(csvfiles) > 0:
             if execscript:
                 qcsv_script(csvfiles, outfile, file_db, keep_db, sqlcmd)
