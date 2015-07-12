@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: querycsv-redux
-Version: 3.1.0
+Version: 3.1.1
 Summary: Execute SQL code against data contained in one or more comma-separated-value (CSV) files.
 Home-page: https://github.com/kdeloach/querycsv
 Author: Dreas Nielsen

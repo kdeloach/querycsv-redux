@@ -7,7 +7,7 @@ to extract and summarize data from one or more delimited (e.g., CSV) files.
 Syntax and Options
 ==================
 ```
-querycsv 3.1.0 -- Executes SQL on a delimited text file.
+querycsv 3.1.1 -- Executes SQL on a delimited text file.
 Copyright (c) 2008, R.Dreas Nielsen
 Licensed under the GNU General Public License version 3.
 Syntax:
