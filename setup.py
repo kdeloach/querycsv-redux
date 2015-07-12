@@ -1,12 +1,13 @@
 from distutils.core import setup
 
-setup(name='querycsv',
-      version='0.3.0.0',
+
+setup(name='querycsv-redux',
+      version='3.1.0',
       description="Execute SQL code against data contained in one or more "
                   "comma-separated-value (CSV) files.",
       author='Dreas Nielsen',
       author_email='dreas.nielsen@gmail.com',
-      url='none',
+      url='https://github.com/kdeloach/querycsv-redux',
       scripts=['querycsv/querycsv.py'],
       packages=['querycsv'],
       classifiers=[
