@@ -2,12 +2,13 @@ from distutils.core import setup
 
 setup(name='querycsv',
       version='0.3.0.0',
-      description="Execute SQL code against data contained in one or more"
-                  " comma-separated-value (CSV) files.",
+      description="Execute SQL code against data contained in one or more "
+                  "comma-separated-value (CSV) files.",
       author='Dreas Nielsen',
       author_email='dreas.nielsen@gmail.com',
       url='none',
       scripts=['querycsv/querycsv.py'],
+      packages=['querycsv'],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Environment :: Console',
