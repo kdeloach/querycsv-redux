@@ -42,6 +42,9 @@
                 otherwise it is not preserved.  Added the option to execute
                 SQL commands from a script file. RDN.
 """
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
 
 import sys
 import os.path
@@ -49,55 +52,28 @@ import getopt
 import csv
 import sqlite3
 
-_version = "0.3.0.0"
-_vdate = "2008-02-23"
-
-__help_msg = """Copyright (c) 2008, R.Dreas Nielsen
-Licensed under the GNU General Public License version 3.
-Syntax:
-    querycsv [options] <SELECT_stmt or scriptfile_name>
-Options:
-   -i <fname> Input CSV file name.
-              Multiple -i options can be used to specify more than one input
-              file.
-   -u <fname> Use the specified sqlite file for input.
-              Options -i, -f, and -k are ignored if -u is specified
-   -o <fname> Send output to the named CSV file.
-   -s         Execute a SQL script from the file given as the argument.
-              Output will be displayed from the last SQL command in
-              the script.
-   -f <fname> Use a sqlite file instead of memory for intermediate storage.
-   -k         Keep the sqlite file when done (only valid with -f).
-   -h         Print this help and exit.
-Notes:
-   1. Table names used in the SQL should match the input CSV file names,
-      without the ".csv" extensionl
-   2. When multiple input files or an existing sqlite file are used,
-      the SQL can contain JOIN expressions.
-   3. When a SQL script file is used instead of a single SQL command on
-      the command line, only the output of the last command will be
-      displayed."""
+VERSION = "0.3.0.0"
 
 
-def quote_str(str):
-    if len(str) == 0:
+def quote_str(s):
+    if len(s) == 0:
         return "''"
-    if len(str) == 1:
-        if str == "'":
+    if len(s) == 1:
+        if s == "'":
             return "''''"
         else:
-            return "'%s'" % str
-    if str[0] != "'" or str[-1:] != "'":
-        return "'%s'" % str.replace("'", "''")
-    return str
+            return "'%s'" % s
+    if s[0] != "'" or s[-1:] != "'":
+        return "'%s'" % s.replace("'", "''")
+    return s
 
 
-def quote_list(l):
-    return [quote_str(x) for x in l]
+def quote_list(arr):
+    return [quote_str(s) for s in arr]
 
 
-def quote_list_as_str(l):
-    return ",".join(quote_list(l))
+def quote_list_as_str(arr):
+    return ",".join(quote_list(arr))
 
 
 # pp() function by Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
@@ -122,7 +98,7 @@ def pp(cursor):
         len(rows) == 2 and '\n no row selected\n' or '\n')
 
 
-def read_sqlfile(fn):
+def read_sqlfile(filename):
     """
     Open the text file with the specified name, read it, and return a list of
     the SQL statements it contains.
@@ -130,21 +106,23 @@ def read_sqlfile(fn):
     # Currently (11/11/2007) this routine knows only two things about SQL:
     #    1. Lines that start with "--" are comments.
     #    2. Lines that end with ";" terminate a SQL statement.
-    sqlfile = open(fn, "rt")
+    sqlfile = open(filename, "rt")
     sqllist = []
     currcmd = ''
     for line in sqlfile:
         line = line.strip()
         if len(line) > 0 and not (len(line) > 1 and line[:2] == "--"):
             currcmd = "%s %s" % (currcmd, line)
-            if line[-1:] == ';':
+            if line[-1] == ';':
                 sqllist.append(currcmd.strip())
                 currcmd = ''
     return sqllist
 
 
-def execsql(db, sqllist, outfile=None):
+def execute_sql(db, sqllist, outfile=None):
     """
+    Parameters
+    ----------
     db: Database object that conforms to the Python DB API.
     sqllist: List of SQL statements, to be executed in order.
     outfile: Name of CSV file in which to dump the results of the last command.
@@ -155,21 +133,21 @@ def execsql(db, sqllist, outfile=None):
     qsqldb(db, sqllist[len(sqllist) - 1], outfile)
 
 
-def csv_to_sqldb(sqldb, infilename, table_name):
-    dialect = csv.Sniffer().sniff(open(infilename, "rt").readline())
-    inf = csv.reader(open(infilename, "rt"), dialect)
-    column_names = inf.next()
+def csv_to_sqldb(db, filename, table_name):
+    dialect = csv.Sniffer().sniff(open(filename, "rt").readline())
+    reader = csv.reader(open(filename, "rt"), dialect)
+    column_names = reader.next()
     colstr = ",".join("[{0}]".format(col) for col in column_names)
     try:
-        sqldb.execute("drop table %s;" % table_name)
+        db.execute("drop table %s;" % table_name)
     except:
         pass
-    sqldb.execute("create table %s (%s);" % (table_name, colstr))
-    for l in inf:
-        vals = quote_list_as_str(l)
+    db.execute("create table %s (%s);" % (table_name, colstr))
+    for row in reader:
+        vals = quote_list_as_str(row)
         sql = "insert into %s values (%s);" % (table_name, vals)
-        sqldb.execute(sql)
-    sqldb.commit()
+        db.execute(sql)
+    db.commit()
 
 
 def qsqldb(sqldb, sql_cmd, outfilename=None):
@@ -177,16 +155,15 @@ def qsqldb(sqldb, sql_cmd, outfilename=None):
     Run a SQL command on the specified (open) sqlite3 database,
     and write the output.
     """
-    #
     # Create the output file if specified
     if outfilename:
         outfile = open(outfilename, "wb")
         csvout = csv.writer(outfile, quoting=csv.QUOTE_NONNUMERIC)
-    #
+
     # Execute SQL
     curs = sqldb.cursor()
     curs.execute(sql_cmd)
-    #
+
     # Write output to file or console
     if outfilename:
         datarows = curs.fetchall()
@@ -196,7 +173,7 @@ def qsqldb(sqldb, sql_cmd, outfilename=None):
             csvout.writerow(list(row))
         outfile.close()
     else:
-        print pp(curs)
+        print(pp(curs))
 
 
 def qsqlite(sql_cmd, sqlfilename=None, outfilename=None):
@@ -255,7 +232,7 @@ def qsqlite_script(scriptfile, sqlfilename=None, outfilename=None):
     else:
         conn = sqlite3.connect(sqlfilename)
     cmds = read_sqlfile(scriptfile)
-    execsql(conn, cmds, outfilename)
+    execute_sql(conn, cmds, outfilename)
     conn.close()
 
 
@@ -283,7 +260,7 @@ def qcsv_script(infilenames, outfilename, file_db, keep_db, scriptfile):
 
     # Execute the SQL
     cmds = read_sqlfile(scriptfile)
-    execsql(conn, cmds, outfilename)
+    execute_sql(conn, cmds, outfilename)
 
     # Clean up.
     conn.close()
@@ -295,12 +272,35 @@ def qcsv_script(infilenames, outfilename, file_db, keep_db, scriptfile):
 
 
 def print_help():
-    print "querycsv %s %s -- Executes SQL on a delimited text file." % (
-        _version, _vdate)
-    print __help_msg
+    print("""querycsv {0} -- Executes SQL on a delimited text file.
+Copyright (c) 2008, R.Dreas Nielsen
+Licensed under the GNU General Public License version 3.
+Syntax:
+    querycsv [options] <SELECT_stmt or scriptfile_name>
+Options:
+   -i <fname> Input CSV file name.
+              Multiple -i options can be used to specify more than one input
+              file.
+   -u <fname> Use the specified sqlite file for input.
+              Options -i, -f, and -k are ignored if -u is specified
+   -o <fname> Send output to the named CSV file.
+   -s         Execute a SQL script from the file given as the argument.
+              Output will be displayed from the last SQL command in
+              the script.
+   -f <fname> Use a sqlite file instead of memory for intermediate storage.
+   -k         Keep the sqlite file when done (only valid with -f).
+   -h         Print this help and exit.
+Notes:
+   1. Table names used in the SQL should match the input CSV file names,
+      without the ".csv" extensionl
+   2. When multiple input files or an existing sqlite file are used,
+      the SQL can contain JOIN expressions.
+   3. When a SQL script file is used instead of a single SQL command on
+      the command line, only the output of the last command will be
+      displayed.""".format(VERSION))
 
 
-if __name__ == '__main__':
+def main():
     optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:khs")
     if len(arglist) == 0 or '-h' in [o[0] for o in optlist]:
         print_help()
@@ -341,3 +341,7 @@ if __name__ == '__main__':
         else:
             print_help()
             sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
