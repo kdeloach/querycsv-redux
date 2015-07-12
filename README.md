@@ -1,43 +1,44 @@
-querycsv.py
 Execute SQL code against data contained in one or more comma-separated-value
 (CSV) files.
 
 querycsv.py is a Python module and program that allows you to use SQL
 to extract and summarize data from one or more delimited (e.g., CSV) files.
 
-
 Syntax and Options
 ==================
-
-querycsv.py -i <fname> [other options] [SELECT_stmt]
-
-Arguments
----------
-
-   SELECT_stmt
-      A SQL statement (which must be quoted) that is to be executed
-      against the CSV file(s) that are specified by the "-i" option.
-      This argument is optional and may be omitted if the "-f" option
-      is used to specify a SQL script file to use instead.
-
-Options
--------
-
+```
+querycsv 0.3.0.0 -- Executes SQL on a delimited text file.
+Copyright (c) 2008, R.Dreas Nielsen
+Licensed under the GNU General Public License version 3.
+Syntax:
+    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file> [-k]]
+        (-s <fname>|<SELECT stmt>)
+    querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
+Options:
    -i <fname> Input CSV file name.
-              Multiple -i options can be used to specify more than one input file.
+              Multiple -i options can be used to specify more than one input
+              file.
    -u <fname> Use the specified sqlite file for input.
               Options -i, -f, and -k are ignored if -u is specified
    -o <fname> Send output to the named CSV file.
-   -s         Execute a SQL script from the file given as the argument.
+   -s <fname> Execute a SQL script from the file given as the argument.
+              Output will be displayed from the last SQL command in
+              the script.
    -f <fname> Use a sqlite file instead of memory for intermediate storage.
    -k         Keep the sqlite file when done (only valid with -f).
    -h         Print this help and exit.
-
-
+Notes:
+   1. Table names used in the SQL should match the input CSV file names,
+      without the ".csv" extension.
+   2. When multiple input files or an existing sqlite file are used,
+      the SQL can contain JOIN expressions.
+   3. When a SQL script file is used instead of a single SQL command on
+      the command line, only the output of the last command will be
+      displayed.
+```
 
 Usage Notes
 ===========
-
   *  The first line of the file should contain the names of the columns.
 
   *  Table names used in the SQL should match the input CSV file names,
@@ -64,4 +65,3 @@ Usage Notes
 
   *  The SQL language features that can be used with querycsv are those
      supported by the Sqlite language (http://www.sqlite.org/lang.html).
-
