@@ -1,11 +1,11 @@
 Metadata-Version: 1.0
-Name: querycsv
-Version: 0.3.0.0
+Name: querycsv-redux
+Version: 3.1.0
 Summary: Execute SQL code against data contained in one or more comma-separated-value (CSV) files.
-Home-page: none
+Home-page: https://github.com/kdeloach/querycsv
 Author: Dreas Nielsen
 Author-email: dreas.nielsen@gmail.com
-License: UNKNOWN
+License: GNU General Public License (GPL)
 Description: ``querycsv.py`` is a Python module and program
         that executes SQL code against data contained in one or more
         comma-separated-value (CSV) files. The output of the SQL query will be

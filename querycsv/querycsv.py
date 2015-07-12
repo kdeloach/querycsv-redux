@@ -52,7 +52,7 @@ import getopt
 import csv
 import sqlite3
 
-VERSION = "0.3.0.0"
+VERSION = "3.1.0"
 
 
 def quote_str(s):
