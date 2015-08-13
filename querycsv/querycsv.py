@@ -55,27 +55,6 @@ import sqlite3
 VERSION = "3.1.1"
 
 
-def quote_str(s):
-    if len(s) == 0:
-        return "''"
-    if len(s) == 1:
-        if s == "'":
-            return "''''"
-        else:
-            return "'%s'" % s
-    if s[0] != "'" or s[-1:] != "'":
-        return "'%s'" % s.replace("'", "''")
-    return s
-
-
-def quote_list(arr):
-    return [quote_str(s) for s in arr]
-
-
-def quote_list_as_str(arr):
-    return ",".join(quote_list(arr))
-
-
 # Source: Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
 # Modified version taken from sqliteplus.py by Florent Xicluna
 def pretty_print(rows, fp):
@@ -134,15 +113,22 @@ def csv_to_sqldb(db, filename, table_name):
     reader = csv.reader(open(filename, "rt"), dialect)
     column_names = reader.next()
     colstr = ",".join("[{0}]".format(col) for col in column_names)
+
     try:
         db.execute("drop table %s;" % table_name)
     except:
         pass
     db.execute("create table %s (%s);" % (table_name, colstr))
     for row in reader:
-        vals = quote_list_as_str(row)
-        sql = "insert into %s values (%s);" % (table_name, vals)
-        db.execute(sql)
+        params = zip(column_names, row)
+        insert_statement = ",".join(map(lambda t: "{0}{1}{0}".format("'", t[0]), params))
+        values = ",".join(map(lambda t: "?", params))
+        sql = "insert into {} ({}) VALUES ({});".format(table_name, insert_statement, values)
+
+        try:
+            db.execute(sql, map(lambda t: unicode(t[1], 'utf8'), params))
+        except Exception as e:
+            raise e
     db.commit()
 
 
