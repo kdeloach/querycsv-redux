@@ -55,27 +55,6 @@ import sqlite3
 VERSION = "3.1.1"
 
 
-def quote_str(s):
-    if len(s) == 0:
-        return "''"
-    if len(s) == 1:
-        if s == "'":
-            return "''''"
-        else:
-            return "'%s'" % s
-    if s[0] != "'" or s[-1:] != "'":
-        return "'%s'" % s.replace("'", "''")
-    return s
-
-
-def quote_list(arr):
-    return [quote_str(s) for s in arr]
-
-
-def quote_list_as_str(arr):
-    return ",".join(quote_list(arr))
-
-
 # Source: Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
 # Modified version taken from sqliteplus.py by Florent Xicluna
 def pretty_print(rows, fp):
@@ -84,7 +63,7 @@ def pretty_print(rows, fp):
     rcols = range(len(headers))
     rrows = range(len(rows))
     colwidth = [max(0, len(headers[j]),
-                    *(len(str(rows[i][j])) for i in rrows)) for j in rcols]
+                    *(len(rows[i][j]) for i in rrows)) for j in rcols]
 
     # Header
     fp.write(' ' + ' | '.join([headers[i].ljust(colwidth[i])
@@ -96,7 +75,7 @@ def pretty_print(rows, fp):
 
     # Rows
     for row in rows:
-        fp.write(' ' + ' | '.join([str(row[i]).ljust(colwidth[i])
+        fp.write(' ' + ' | '.join([row[i].ljust(colwidth[i])
                                    for i in rcols]) + '\n')
 
     if len(rows) == 0:
@@ -140,9 +119,10 @@ def csv_to_sqldb(db, filename, table_name):
         pass
     db.execute("create table %s (%s);" % (table_name, colstr))
     for row in reader:
-        vals = quote_list_as_str(row)
-        sql = "insert into %s values (%s);" % (table_name, vals)
-        db.execute(sql)
+        vals = [unicode(cell, 'utf-8') for cell in row]
+        params = ','.join('?' for i in range(len(vals)))
+        sql = "insert into %s values (%s);" % (table_name, params)
+        db.execute(sql, vals)
     db.commit()
 
 
