@@ -52,7 +52,7 @@ import getopt
 import csv
 import sqlite3
 
-VERSION = "3.1.1"
+VERSION = "3.1.2"
 
 
 # Source: Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
