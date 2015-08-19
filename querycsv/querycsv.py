@@ -47,6 +47,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import sys
+import logging
 import os.path
 import getopt
 import csv
@@ -54,6 +55,9 @@ import sqlite3
 
 VERSION = "3.1.2"
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.CRITICAL)
+log.addHandler(logging.StreamHandler(sys.stderr))
 
 # Source: Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
 # Modified version taken from sqliteplus.py by Florent Xicluna
@@ -170,8 +174,8 @@ def query_csv(sqlcmd, infilenames, file_db=None, keep_db=False):
     if file_db:
         try:
             os.unlink(file_db)
-        except:
-            pass
+        except Exception as ex:
+            log.exception(ex)
 
     database = file_db if file_db else ':memory:'
     with sqlite3.connect(database) as conn:
@@ -187,8 +191,8 @@ def query_csv(sqlcmd, infilenames, file_db=None, keep_db=False):
             if file_db and not keep_db:
                 try:
                     os.unlink(file_db)
-                except:
-                    pass
+                except Exception as ex:
+                    log.exception(ex)
 
             return results
 
@@ -202,8 +206,8 @@ def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
     if file_db:
         try:
             os.unlink(file_db)
-        except:
-            pass
+        except Exception as ex:
+            log.exception(ex)
 
     database = file_db if file_db else ':memory:'
     with sqlite3.connect(database) as conn:
@@ -222,8 +226,8 @@ def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
         if file_db and not keep_db:
             try:
                 os.unlink(file_db)
-            except:
-                pass
+            except Exception as ex:
+                log.exception(ex)
 
         return results
 
@@ -260,12 +264,15 @@ Notes:
 
 
 def main():
-    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:khs")
+    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:vkhs")
     flags = dict(optlist)
 
     if len(arglist) == 0 or '-h' in flags:
         print_help()
         sys.exit(0)
+
+    if '-v' in flags:
+        log.setLevel(logging.DEBUG)
 
     outfile = flags.get('-o', None)
     usefile = flags.get('-u', None)
