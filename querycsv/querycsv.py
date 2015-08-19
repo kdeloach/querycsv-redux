@@ -188,13 +188,17 @@ def query_csv(sqlcmd, infilenames, file_db=None, keep_db=False):
             # Execute the SQL
             results = execute_sql(conn, [sqlcmd])
 
-            if file_db and not keep_db:
-                try:
-                    os.unlink(file_db)
-                except Exception as ex:
-                    log.exception(ex)
+    conn.close()
 
-            return results
+    if file_db and not keep_db:
+        try:
+            os.unlink(file_db)
+        except Exception as ex:
+            import traceback
+            traceback.print_stack()
+            log.exception(ex)
+
+    return results
 
 
 def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
@@ -221,15 +225,16 @@ def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
         cmds = read_sqlfile(scriptfile)
         results = execute_sql(conn, cmds)
 
-        # Clean up.
-        conn.close()
-        if file_db and not keep_db:
-            try:
-                os.unlink(file_db)
-            except Exception as ex:
-                log.exception(ex)
+    # Clean up.
+    conn.close()
 
-        return results
+    if file_db and not keep_db:
+        try:
+            os.unlink(file_db)
+        except Exception as ex:
+            log.exception(ex)
+
+    return results
 
 
 def print_help():
