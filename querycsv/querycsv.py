@@ -161,18 +161,11 @@ def query_sqlite_file(scriptfile, sqlfilename=None):
         return execute_sql(conn, cmds)
 
 
-def query_csv(sqlcmd, infilenames, file_db=None, keep_db=False):
+def query_csv(sqlcmd, infilenames, file_db=None):
     """
     Query the listed CSV files, optionally writing the output to a
     sqlite file on disk.
     """
-    # Create a sqlite file, if specified
-    if file_db:
-        try:
-            os.unlink(file_db)
-        except:
-            pass
-
     database = file_db if file_db else ':memory:'
     with sqlite3.connect(database) as conn:
         # Move data from input CSV files into sqlite
@@ -184,16 +177,10 @@ def query_csv(sqlcmd, infilenames, file_db=None, keep_db=False):
             # Execute the SQL
             results = execute_sql(conn, [sqlcmd])
 
-            if file_db and not keep_db:
-                try:
-                    os.unlink(file_db)
-                except:
-                    pass
-
-            return results
+    return results
 
 
-def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
+def query_csv_file(scriptfile, infilenames, file_db=None):
     """
     Query the listed CSV files, optionally writing the output to a sqlite
     file on disk.
@@ -217,15 +204,7 @@ def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
         cmds = read_sqlfile(scriptfile)
         results = execute_sql(conn, cmds)
 
-        # Clean up.
-        conn.close()
-        if file_db and not keep_db:
-            try:
-                os.unlink(file_db)
-            except:
-                pass
-
-        return results
+    return results
 
 
 def print_help():
@@ -233,7 +212,7 @@ def print_help():
 Copyright (c) 2008, R.Dreas Nielsen
 Licensed under the GNU General Public License version 3.
 Syntax:
-    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file> [-k]]
+    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file>]
         (-s <fname>|<SELECT stmt>)
     querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
 Options:
@@ -241,13 +220,12 @@ Options:
               Multiple -i options can be used to specify more than one input
               file.
    -u <fname> Use the specified sqlite file for input.
-              Options -i, -f, and -k are ignored if -u is specified
+              Options -i and -f, are ignored if -u is specified
    -o <fname> Send output to the named CSV file.
    -s <fname> Execute a SQL script from the file given as the argument.
               Output will be displayed from the last SQL command in
               the script.
    -f <fname> Use a sqlite file instead of memory for intermediate storage.
-   -k         Keep the sqlite file when done (only valid with -f).
    -h         Print this help and exit.
 Notes:
    1. Table names used in the SQL should match the input CSV file names,
@@ -260,7 +238,7 @@ Notes:
 
 
 def main():
-    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:khs")
+    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:hs")
     flags = dict(optlist)
 
     if len(arglist) == 0 or '-h' in flags:
@@ -281,14 +259,13 @@ def main():
             results = query_sqlite(sqlcmd, usefile)
     else:
         file_db = flags.get('-f', None)
-        keep_db = '-k' in flags
         csvfiles = [opt[1] for opt in optlist if opt[0] == '-i']
         if len(csvfiles) > 0:
             if execscript:
                 # sqlcmd should be the script file name
-                results = query_csv_file(sqlcmd, csvfiles, file_db, keep_db)
+                results = query_csv_file(sqlcmd, csvfiles, file_db)
             else:
-                results = query_csv(sqlcmd, csvfiles, file_db, keep_db)
+                results = query_csv(sqlcmd, csvfiles, file_db)
         else:
             print_help()
             sys.exit(1)
