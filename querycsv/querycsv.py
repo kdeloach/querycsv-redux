@@ -108,6 +108,12 @@ def read_sqlfile(filename):
     return sqlcmds
 
 
+def commands(cmds):
+    if isinstance(cmds, (str, unicode)):
+        return [cmds]
+    return cmds
+
+
 def csv_to_sqldb(db, filename, table_name):
     dialect = csv.Sniffer().sniff(open(filename, "rt").readline())
     reader = csv.reader(open(filename, "rt"), dialect)
@@ -147,18 +153,16 @@ def query_sqlite(sqlcmd, sqlfilename=None):
     """
     database = sqlfilename if sqlfilename else ':memory:'
     with sqlite3.connect(database) as conn:
-        return execute_sql(conn, [sqlcmd])
+        return execute_sql(conn, commands(sqlcmd))
 
 
-def query_sqlite_file(scriptfile, sqlfilename=None):
+def query_sqlite_file(scriptfile, *args, **kwargs):
     """
     Run a script of SQL commands on a sqlite database in the specified
     file (or in memory if sqlfilename is None).
     """
-    database = sqlfilename if sqlfilename else ':memory:'
-    with sqlite3.connect(database) as conn:
-        cmds = read_sqlfile(scriptfile)
-        return execute_sql(conn, cmds)
+    cmds = read_sqlfile(scriptfile)
+    return query_sqlite(cmds, *args, **kwargs)
 
 
 def query_csv(sqlcmd, infilenames, file_db=None):
@@ -175,36 +179,18 @@ def query_csv(sqlcmd, infilenames, file_db=None):
             csv_to_sqldb(conn, csvfile, tablename)
 
             # Execute the SQL
-            results = execute_sql(conn, [sqlcmd])
+            results = execute_sql(conn, commands(sqlcmd))
 
     return results
 
 
-def query_csv_file(scriptfile, infilenames, file_db=None):
+def query_csv_file(scriptfile, *args, **kwargs):
     """
     Query the listed CSV files, optionally writing the output to a sqlite
     file on disk.
     """
-    # Create a sqlite file, if specified
-    if file_db:
-        try:
-            os.unlink(file_db)
-        except:
-            pass
-
-    database = file_db if file_db else ':memory:'
-    with sqlite3.connect(database) as conn:
-        # Move data from input CSV files into sqlite
-        for csvfile in infilenames:
-            head, tail = os.path.split(csvfile)
-            tablename = os.path.splitext(tail)[0]
-            csv_to_sqldb(conn, csvfile, tablename)
-
-        # Execute the SQL
-        cmds = read_sqlfile(scriptfile)
-        results = execute_sql(conn, cmds)
-
-    return results
+    cmds = read_sqlfile(scriptfile)
+    return query_csv(cmds, *args, **kwargs)
 
 
 def print_help():
