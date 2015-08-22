@@ -1,46 +1,33 @@
 #!/usr/bin/env python
 """
- querycsv.py
+Executes SQL on a delimited text file.
 
- Purpose:
-   Execute SQL (conceptually, a SELECT statement) on an input file, and
-   write the results to an output file.
-
- Author(s):
-   R. Dreas Nielsen (RDN)
-
- Copyright and license:
-   Copyright (c) 2008, R.Dreas Nielsen
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-   The GNU General Public License is available at
-   <http://www.gnu.org/licenses/>
-
- Notes:
-   1. The input files must be in a delimited format, such as a CSV file.
-   2. The first line of each input file must contain column names.
-   3. Default output is to the console in a readable format.  Output to
-      a file is in CSV format.
-
- History:
-   Date        Revisions
-   -------     ---------------
-   2/17/2008    First version.  One CSV file input, output only to CSV.  RDN.
-   2/19/2008    Began adding code to allow multiple input files, or an
-                existing sqlite file, to allow a sqlite file to be preserved,
-                and to default to console output rather than CSV output.  RDN.
-   2/20/2008    Completed coding of revisions.  RDN.
-   2/22/2008    Added 'conn.close()' to 'qsqlite()'.  Corrected order of
-                arguments to 'qsqlite()' in 'main()'. RDN.
-   2/23/2008    Added 'commit()' after copying data into the sqlite file;
-                otherwise it is not preserved.  Added the option to execute
-                SQL commands from a script file. RDN.
+Copyright (c) 2008, R.Dreas Nielsen
+Licensed under the GNU General Public License version 3.
+Syntax:
+    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file>]
+        (-s <fname>|<SELECT stmt>)
+    querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
+Options:
+   -i <fname> Input CSV file name.
+              Multiple -i options can be used to specify more than one input
+              file.
+   -u <fname> Use the specified sqlite file for input.
+              Options -i and -f, are ignored if -u is specified
+   -o <fname> Send output to the named CSV file.
+   -s <fname> Execute a SQL script from the file given as the argument.
+              Output will be displayed from the last SQL command in
+              the script.
+   -f <fname> Use a sqlite file instead of memory for intermediate storage.
+   -h         Print this help and exit.
+Notes:
+   1. Table names used in the SQL should match the input CSV file names,
+      without the ".csv" extension.
+   2. When multiple input files or an existing sqlite file are used,
+      the SQL can contain JOIN expressions.
+   3. When a SQL script file is used instead of a single SQL command on
+      the command line, only the output of the last command will be
+      displayed.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -194,33 +181,7 @@ def query_csv_file(scriptfile, *args, **kwargs):
 
 
 def print_help():
-    print("""querycsv {0} -- Executes SQL on a delimited text file.
-Copyright (c) 2008, R.Dreas Nielsen
-Licensed under the GNU General Public License version 3.
-Syntax:
-    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file>]
-        (-s <fname>|<SELECT stmt>)
-    querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
-Options:
-   -i <fname> Input CSV file name.
-              Multiple -i options can be used to specify more than one input
-              file.
-   -u <fname> Use the specified sqlite file for input.
-              Options -i and -f, are ignored if -u is specified
-   -o <fname> Send output to the named CSV file.
-   -s <fname> Execute a SQL script from the file given as the argument.
-              Output will be displayed from the last SQL command in
-              the script.
-   -f <fname> Use a sqlite file instead of memory for intermediate storage.
-   -h         Print this help and exit.
-Notes:
-   1. Table names used in the SQL should match the input CSV file names,
-      without the ".csv" extension.
-   2. When multiple input files or an existing sqlite file are used,
-      the SQL can contain JOIN expressions.
-   3. When a SQL script file is used instead of a single SQL command on
-      the command line, only the output of the last command will be
-      displayed.""".format(VERSION))
+    print(__doc__.strip())
 
 
 def main():
