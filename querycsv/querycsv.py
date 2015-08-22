@@ -8,6 +8,7 @@ Syntax:
     querycsv -i <csv file>... [-o <fname>] [-f <sqlite file>]
         (-s <fname>|<SELECT stmt>)
     querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
+    querycsv (-h|-V)
 Options:
    -i <fname> Input CSV file name.
               Multiple -i options can be used to specify more than one input
@@ -20,6 +21,7 @@ Options:
               the script.
    -f <fname> Use a sqlite file instead of memory for intermediate storage.
    -h         Print this help and exit.
+   -V         Print the version number.
 Notes:
    1. Table names used in the SQL should match the input CSV file names,
       without the ".csv" extension.
@@ -185,8 +187,12 @@ def print_help():
 
 
 def main():
-    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:hs")
+    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:Vhs")
     flags = dict(optlist)
+
+    if '-V' in flags:
+        print(VERSION)
+        sys.exit(0)
 
     if len(arglist) == 0 or '-h' in flags:
         print_help()
