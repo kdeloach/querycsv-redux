@@ -97,10 +97,11 @@ def read_sqlfile(filename):
     return sqlcmds
 
 
-def commands(cmds):
-    if isinstance(cmds, (str, unicode)):
-        return [cmds]
-    return cmds
+def as_list(item):
+    """Wrap `item` in a list if it isn't already one."""
+    if isinstance(item, (str, unicode)):
+        return [item]
+    return item
 
 
 def csv_to_sqldb(db, filename, table_name):
@@ -142,7 +143,7 @@ def query_sqlite(sqlcmd, sqlfilename=None):
     """
     database = sqlfilename if sqlfilename else ':memory:'
     with sqlite3.connect(database) as conn:
-        return execute_sql(conn, commands(sqlcmd))
+        return execute_sql(conn, as_list(sqlcmd))
 
 
 def query_sqlite_file(scriptfile, *args, **kwargs):
@@ -166,11 +167,10 @@ def query_csv(sqlcmd, infilenames, file_db=None):
             head, tail = os.path.split(csvfile)
             tablename = os.path.splitext(tail)[0]
             csv_to_sqldb(conn, csvfile, tablename)
-
-            # Execute the SQL
-            results = execute_sql(conn, commands(sqlcmd))
-
+        results = execute_sql(conn, as_list(sqlcmd))
     return results
+
+
 
 
 def query_csv_file(scriptfile, *args, **kwargs):
