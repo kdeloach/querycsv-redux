@@ -10,8 +10,8 @@ import unittest
 from StringIO import StringIO
 
 from .querycsv import (query_csv, query_csv_file,
-                       query_sqlite, query_sqlite_file,
-                       import_csv, pretty_print)
+                       query_sqlite, import_csv,
+                       pretty_print)
 
 TEST_DIR = 'test_files'
 
@@ -162,13 +162,15 @@ class TestQueryFunctions(unittest.TestCase):
         fp = StringIO()
         results = query_csv('select * from foo', self.foo)
         pretty_print(results, fp)
-        self.assertEqual(fp.getvalue(), ' a | b | c\n===========\n 1 | 2 | 3\n')
+        self.assertEqual(fp.getvalue(),
+                         ' a | b | c\n===========\n 1 | 2 | 3\n')
 
     def test_pretty_print2(self):
         fp = StringIO()
         results = query_csv('select count(*) from foo', self.foo)
         pretty_print(results, fp)
-        self.assertEqual(fp.getvalue(), ' count(*)\n==========\n 1       \n')
+        self.assertEqual(fp.getvalue(),
+                         ' count(*)\n==========\n 1       \n')
 
 if __name__ == '__main__':
     unittest.main()

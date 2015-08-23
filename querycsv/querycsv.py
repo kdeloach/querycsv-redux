@@ -50,11 +50,9 @@ VERSION = "3.1.2"
 # Modified version taken from sqliteplus.py by Florent Xicluna
 def pretty_print(rows, fp):
     headers = rows.pop(0)
+    rows = [[unicode(col) for col in row] for row in rows]
 
     rcols = range(len(headers))
-    rrows = range(len(rows))
-
-    rows = [[unicode(col) for col in row] for row in rows]
 
     colwidth = [max(0, len(headers[i])) for i in xrange(len(headers))]
     for y in xrange(len(rows)):
@@ -145,7 +143,7 @@ def table_exists(conn, table_name):
     try:
         conn.execute('select 1 from {0}'.format(table_name))
         return True
-    except sqlite3.OperationalError as ex:
+    except sqlite3.OperationalError:
         return False
 
 
