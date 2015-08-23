@@ -53,11 +53,16 @@ def pretty_print(rows, fp):
 
     rcols = range(len(headers))
     rrows = range(len(rows))
-    colwidth = [max(0, len(headers[j]),
-                    *(len(rows[i][j]) for i in rrows)) for j in rcols]
+
+    rows = [[unicode(col) for col in row] for row in rows]
+
+    colwidth = [max(0, len(headers[i])) for i in xrange(len(headers))]
+    for y in xrange(len(rows)):
+        for x in xrange(len(headers)):
+            colwidth[x] = max(colwidth[x], len(rows[y][x]))
 
     # Header
-    fp.write(' ' + ' | '.join([headers[i].ljust(colwidth[i])
+    fp.write(' ' + ' | '.join([unicode(headers[i]).ljust(colwidth[i])
                                for i in rcols]) + '\n')
 
     # Seperator
