@@ -9,26 +9,28 @@ to extract and summarize data from one or more delimited (e.g., CSV) files.
 Syntax and Options
 ==================
 ```
-querycsv 3.1.2 -- Executes SQL on a delimited text file.
+Executes SQL on a delimited text file.
+
 Copyright (c) 2008, R.Dreas Nielsen
 Licensed under the GNU General Public License version 3.
 Syntax:
-    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file> [-k]]
+    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file>]
         (-s <fname>|<SELECT stmt>)
     querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
+    querycsv (-h|-V)
 Options:
    -i <fname> Input CSV file name.
               Multiple -i options can be used to specify more than one input
               file.
    -u <fname> Use the specified sqlite file for input.
-              Options -i, -f, and -k are ignored if -u is specified
+              Options -i and -f, are ignored if -u is specified
    -o <fname> Send output to the named CSV file.
    -s <fname> Execute a SQL script from the file given as the argument.
               Output will be displayed from the last SQL command in
               the script.
    -f <fname> Use a sqlite file instead of memory for intermediate storage.
-   -k         Keep the sqlite file when done (only valid with -f).
    -h         Print this help and exit.
+   -V         Print the version number.
 Notes:
    1. Table names used in the SQL should match the input CSV file names,
       without the ".csv" extension.
