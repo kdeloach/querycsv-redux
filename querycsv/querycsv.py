@@ -1,46 +1,35 @@
 #!/usr/bin/env python
 """
- querycsv.py
+Executes SQL on a delimited text file.
 
- Purpose:
-   Execute SQL (conceptually, a SELECT statement) on an input file, and
-   write the results to an output file.
-
- Author(s):
-   R. Dreas Nielsen (RDN)
-
- Copyright and license:
-   Copyright (c) 2008, R.Dreas Nielsen
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-   The GNU General Public License is available at
-   <http://www.gnu.org/licenses/>
-
- Notes:
-   1. The input files must be in a delimited format, such as a CSV file.
-   2. The first line of each input file must contain column names.
-   3. Default output is to the console in a readable format.  Output to
-      a file is in CSV format.
-
- History:
-   Date        Revisions
-   -------     ---------------
-   2/17/2008    First version.  One CSV file input, output only to CSV.  RDN.
-   2/19/2008    Began adding code to allow multiple input files, or an
-                existing sqlite file, to allow a sqlite file to be preserved,
-                and to default to console output rather than CSV output.  RDN.
-   2/20/2008    Completed coding of revisions.  RDN.
-   2/22/2008    Added 'conn.close()' to 'qsqlite()'.  Corrected order of
-                arguments to 'qsqlite()' in 'main()'. RDN.
-   2/23/2008    Added 'commit()' after copying data into the sqlite file;
-                otherwise it is not preserved.  Added the option to execute
-                SQL commands from a script file. RDN.
+Copyright (c) 2008, R.Dreas Nielsen
+Licensed under the GNU General Public License version 3.
+Syntax:
+    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file>]
+        (-s <fname>|<SELECT stmt>)
+    querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
+    querycsv (-h|-V)
+Options:
+   -i <fname> Input CSV file name.
+              Multiple -i options can be used to specify more than one input
+              file.
+   -u <fname> Use the specified sqlite file for input.
+              Options -i and -f, are ignored if -u is specified
+   -o <fname> Send output to the named CSV file.
+   -s <fname> Execute a SQL script from the file given as the argument.
+              Output will be displayed from the last SQL command in
+              the script.
+   -f <fname> Use a sqlite file instead of memory for intermediate storage.
+   -h         Print this help and exit.
+   -V         Print the version number.
+Notes:
+   1. Table names used in the SQL should match the input CSV file names,
+      without the ".csv" extension.
+   2. When multiple input files or an existing sqlite file are used,
+      the SQL can contain JOIN expressions.
+   3. When a SQL script file is used instead of a single SQL command on
+      the command line, only the output of the last command will be
+      displayed.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -52,6 +41,8 @@ import getopt
 import csv
 import sqlite3
 
+from contextlib import contextmanager
+
 VERSION = "3.1.2"
 
 
@@ -59,14 +50,17 @@ VERSION = "3.1.2"
 # Modified version taken from sqliteplus.py by Florent Xicluna
 def pretty_print(rows, fp):
     headers = rows.pop(0)
+    rows = [[unicode(col) for col in row] for row in rows]
 
     rcols = range(len(headers))
-    rrows = range(len(rows))
-    colwidth = [max(0, len(headers[j]),
-                    *(len(rows[i][j]) for i in rrows)) for j in rcols]
+
+    colwidth = [max(0, len(headers[i])) for i in xrange(len(headers))]
+    for y in xrange(len(rows)):
+        for x in xrange(len(headers)):
+            colwidth[x] = max(colwidth[x], len(rows[y][x]))
 
     # Header
-    fp.write(' ' + ' | '.join([headers[i].ljust(colwidth[i])
+    fp.write(' ' + ' | '.join([unicode(headers[i]).ljust(colwidth[i])
                                for i in rcols]) + '\n')
 
     # Seperator
@@ -108,22 +102,49 @@ def read_sqlfile(filename):
     return sqlcmds
 
 
-def csv_to_sqldb(db, filename, table_name):
-    dialect = csv.Sniffer().sniff(open(filename, "rt").readline())
-    reader = csv.reader(open(filename, "rt"), dialect)
-    column_names = reader.next()
-    colstr = ",".join("[{0}]".format(col) for col in column_names)
+def as_list(item):
+    """Wrap `item` in a list if it isn't already one."""
+    if isinstance(item, (str, unicode)):
+        return [item]
+    return item
+
+
+@contextmanager
+def as_connection(db):
+    if isinstance(db, (str, unicode)):
+        with sqlite3.connect(db) as conn:
+            yield conn
+    else:
+        yield db
+
+
+def import_csv(db, filename, table_name=None, overwrite=False):
+    table_name = table_name if table_name else get_table_name(filename)
+
+    with as_connection(db) as conn:
+        if table_exists(conn, table_name) and not overwrite:
+            return
+
+        dialect = csv.Sniffer().sniff(open(filename, 'r').readline())
+        reader = csv.reader(open(filename, 'r'), dialect)
+        column_names = reader.next()
+        colstr = ",".join('[{0}]'.format(col) for col in column_names)
+        conn.execute('drop table if exists %s;' % table_name)
+        conn.execute('create table %s (%s);' % (table_name, colstr))
+        for row in reader:
+            vals = [unicode(cell, 'utf-8') for cell in row]
+            params = ','.join('?' for i in range(len(vals)))
+            sql = 'insert into %s values (%s);' % (table_name, params)
+            conn.execute(sql, vals)
+        conn.commit()
+
+
+def table_exists(conn, table_name):
     try:
-        db.execute("drop table %s;" % table_name)
-    except:
-        pass
-    db.execute("create table %s (%s);" % (table_name, colstr))
-    for row in reader:
-        vals = [unicode(cell, 'utf-8') for cell in row]
-        params = ','.join('?' for i in range(len(vals)))
-        sql = "insert into %s values (%s);" % (table_name, params)
-        db.execute(sql, vals)
-    db.commit()
+        conn.execute('select 1 from {0}'.format(table_name))
+        return True
+    except sqlite3.OperationalError:
+        return False
 
 
 def execute_sql(conn, sqlcmds):
@@ -146,122 +167,56 @@ def query_sqlite(sqlcmd, sqlfilename=None):
     (or in memory if sqlfilename is None).
     """
     database = sqlfilename if sqlfilename else ':memory:'
-    with sqlite3.connect(database) as conn:
-        return execute_sql(conn, [sqlcmd])
+    with as_connection(database) as conn:
+        return execute_sql(conn, as_list(sqlcmd))
 
 
-def query_sqlite_file(scriptfile, sqlfilename=None):
+def query_sqlite_file(scriptfile, *args, **kwargs):
     """
     Run a script of SQL commands on a sqlite database in the specified
     file (or in memory if sqlfilename is None).
     """
-    database = sqlfilename if sqlfilename else ':memory:'
-    with sqlite3.connect(database) as conn:
-        cmds = read_sqlfile(scriptfile)
-        return execute_sql(conn, cmds)
+    cmds = read_sqlfile(scriptfile)
+    return query_sqlite(cmds, *args, **kwargs)
 
 
-def query_csv(sqlcmd, infilenames, file_db=None, keep_db=False):
+def query_csv(sqlcmd, infilenames, file_db=None):
     """
     Query the listed CSV files, optionally writing the output to a
     sqlite file on disk.
     """
-    # Create a sqlite file, if specified
-    if file_db:
-        try:
-            os.unlink(file_db)
-        except:
-            pass
-
     database = file_db if file_db else ':memory:'
-    with sqlite3.connect(database) as conn:
-        # Move data from input CSV files into sqlite
-        for csvfile in infilenames:
-            head, tail = os.path.split(csvfile)
-            tablename = os.path.splitext(tail)[0]
-            csv_to_sqldb(conn, csvfile, tablename)
-
-            # Execute the SQL
-            results = execute_sql(conn, [sqlcmd])
-
-            if file_db and not keep_db:
-                try:
-                    os.unlink(file_db)
-                except:
-                    pass
-
-            return results
+    with as_connection(database) as conn:
+        for csvfile in as_list(infilenames):
+            import_csv(conn, csvfile)
+        return execute_sql(conn, as_list(sqlcmd))
 
 
-def query_csv_file(scriptfile, infilenames, file_db=None, keep_db=False):
+def get_table_name(csvfile):
+    head, tail = os.path.split(csvfile)
+    return os.path.splitext(tail)[0]
+
+
+def query_csv_file(scriptfile, *args, **kwargs):
     """
     Query the listed CSV files, optionally writing the output to a sqlite
     file on disk.
     """
-    # Create a sqlite file, if specified
-    if file_db:
-        try:
-            os.unlink(file_db)
-        except:
-            pass
-
-    database = file_db if file_db else ':memory:'
-    with sqlite3.connect(database) as conn:
-        # Move data from input CSV files into sqlite
-        for csvfile in infilenames:
-            head, tail = os.path.split(csvfile)
-            tablename = os.path.splitext(tail)[0]
-            csv_to_sqldb(conn, csvfile, tablename)
-
-        # Execute the SQL
-        cmds = read_sqlfile(scriptfile)
-        results = execute_sql(conn, cmds)
-
-        # Clean up.
-        conn.close()
-        if file_db and not keep_db:
-            try:
-                os.unlink(file_db)
-            except:
-                pass
-
-        return results
+    cmds = read_sqlfile(scriptfile)
+    return query_csv(cmds, *args, **kwargs)
 
 
 def print_help():
-    print("""querycsv {0} -- Executes SQL on a delimited text file.
-Copyright (c) 2008, R.Dreas Nielsen
-Licensed under the GNU General Public License version 3.
-Syntax:
-    querycsv -i <csv file>... [-o <fname>] [-f <sqlite file> [-k]]
-        (-s <fname>|<SELECT stmt>)
-    querycsv -u <sqlite file> [-o <fname>] (-s <fname>|<SELECT stmt>)
-Options:
-   -i <fname> Input CSV file name.
-              Multiple -i options can be used to specify more than one input
-              file.
-   -u <fname> Use the specified sqlite file for input.
-              Options -i, -f, and -k are ignored if -u is specified
-   -o <fname> Send output to the named CSV file.
-   -s <fname> Execute a SQL script from the file given as the argument.
-              Output will be displayed from the last SQL command in
-              the script.
-   -f <fname> Use a sqlite file instead of memory for intermediate storage.
-   -k         Keep the sqlite file when done (only valid with -f).
-   -h         Print this help and exit.
-Notes:
-   1. Table names used in the SQL should match the input CSV file names,
-      without the ".csv" extension.
-   2. When multiple input files or an existing sqlite file are used,
-      the SQL can contain JOIN expressions.
-   3. When a SQL script file is used instead of a single SQL command on
-      the command line, only the output of the last command will be
-      displayed.""".format(VERSION))
+    print(__doc__.strip())
 
 
 def main():
-    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:khs")
+    optlist, arglist = getopt.getopt(sys.argv[1:], "i:u:o:f:Vhs")
     flags = dict(optlist)
+
+    if '-V' in flags:
+        print(VERSION)
+        sys.exit(0)
 
     if len(arglist) == 0 or '-h' in flags:
         print_help()
@@ -281,14 +236,13 @@ def main():
             results = query_sqlite(sqlcmd, usefile)
     else:
         file_db = flags.get('-f', None)
-        keep_db = '-k' in flags
         csvfiles = [opt[1] for opt in optlist if opt[0] == '-i']
         if len(csvfiles) > 0:
             if execscript:
                 # sqlcmd should be the script file name
-                results = query_csv_file(sqlcmd, csvfiles, file_db, keep_db)
+                results = query_csv_file(sqlcmd, csvfiles, file_db)
             else:
-                results = query_csv(sqlcmd, csvfiles, file_db, keep_db)
+                results = query_csv(sqlcmd, csvfiles, file_db)
         else:
             print_help()
             sys.exit(1)
