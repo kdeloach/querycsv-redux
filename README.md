@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kdeloach/querycsv-redux.svg?branch=topic%2Ftravis)](https://travis-ci.org/kdeloach/querycsv-redux)
+
 Execute SQL code against data contained in one or more comma-separated-value
 (CSV) files.
 
