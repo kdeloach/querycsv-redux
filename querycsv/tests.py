@@ -7,7 +7,7 @@ import csv
 import os.path
 import unittest
 
-from StringIO import StringIO
+from io import StringIO
 
 from .querycsv import (query_csv, query_csv_file,
                        query_sqlite, import_csv,
