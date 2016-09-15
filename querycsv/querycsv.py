@@ -117,6 +117,22 @@ def as_connection(db):
     else:
         yield db
 
+def import_array(db, array, table_name, overwrite=False):
+
+    with as_connection(db) as conn:
+        if table_exists(conn, table_name) and not overwrite:
+            return
+
+        column_names = array[0]
+        colstr = ",".join('[{0}]'.format(col) for col in column_names)
+        conn.execute('drop table if exists %s;' % table_name)
+        conn.execute('create table %s (%s);' % (table_name, colstr))
+        for row in array[1:]:
+            vals = [cell for cell in row]
+            params = ','.join('?' for i in range(len(vals)))
+            sql = 'insert into %s values (%s);' % (table_name, params)
+            conn.execute(sql, vals)
+        conn.commit()
 
 def import_csv(db, filename, table_name=None, overwrite=False):
     table_name = table_name if table_name else get_table_name(filename)

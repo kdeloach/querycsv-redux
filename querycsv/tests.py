@@ -11,7 +11,8 @@ from io import StringIO
 
 from .querycsv import (query_csv, query_csv_file,
                        query_sqlite, import_csv,
-                       pretty_print)
+                       pretty_print, as_connection,
+                       import_array)
 
 TEST_DIR = 'test_files'
 
@@ -60,6 +61,12 @@ class TestQueryFunctions(unittest.TestCase):
             a, b, c
             4, 5, 6
             """)
+        self.array = [
+            [u'name', u'number'],
+            [u'cat', u'1'],
+            [u'dog', u'2'],
+            [u'bird', u'3']
+            ]
 
     def tearDown(self):
         if os.path.exists(self.db):
@@ -171,6 +178,17 @@ class TestQueryFunctions(unittest.TestCase):
         pretty_print(results, fp)
         self.assertEqual(fp.getvalue(),
                          ' count(*)\n==========\n 1       \n')
+
+    def test_query_array1(self):
+        import_array(self.db, self.array, 'result')
+        results = query_sqlite('select * from result where name="dog"', self.db)
+        self.assertEqual(results, [('name', 'number'), (u'dog', u'2')])
+
+    def test_query_array2(self):
+        with as_connection(':memory:') as db:
+            import_array(db, self.array, 'result')
+            results = query_sqlite('select * from result where name="dog"', db)
+            self.assertEqual(results, [('name', 'number'), (u'dog', u'2')])
 
 if __name__ == '__main__':
     unittest.main()
