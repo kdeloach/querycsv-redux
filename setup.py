@@ -2,7 +2,7 @@ from distutils.core import setup
 
 
 setup(name='querycsv-redux',
-      version='4.0.0',
+      version='4.1.0',
       description="Execute SQL code against data contained in one or more "
                   "comma-separated-value (CSV) files.",
       author='Dreas Nielsen',
