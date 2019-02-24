@@ -43,7 +43,7 @@ import sqlite3
 
 from contextlib import contextmanager
 
-VERSION = "4.1.0"
+VERSION = "4.2.0"
 
 
 # Source: Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18

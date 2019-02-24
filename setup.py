@@ -3,7 +3,7 @@ from distutils.core import setup
 
 
 setup(name='querycsv-redux',
-      version='4.1.0',
+      version='4.2.0',
       python_requires='>=2, <3',
       description="Execute SQL code against data contained in one or more "
                   "comma-separated-value (CSV) files.",
