@@ -144,7 +144,7 @@ def import_csv(db, filename, table_name=None, overwrite=False):
             return
 
         dialect = csv.Sniffer().sniff(open(filename, 'r').readline())
-        reader = csv.reader(open(filename, 'r'), dialect)
+        reader = csv.reader(open(filename, 'rU'), dialect)
         column_names = reader.next()
         colstr = ",".join('[{0}]'.format(col) for col in column_names)
         conn.execute('drop table if exists %s;' % table_name)
