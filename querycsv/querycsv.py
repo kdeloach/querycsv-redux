@@ -117,6 +117,7 @@ def as_connection(db):
     else:
         yield db
 
+
 def import_array(db, array, table_name, overwrite=False):
 
     with as_connection(db) as conn:
@@ -133,6 +134,7 @@ def import_array(db, array, table_name, overwrite=False):
             sql = 'insert into %s values (%s);' % (table_name, params)
             conn.execute(sql, vals)
         conn.commit()
+
 
 def import_csv(db, filename, table_name=None, overwrite=False):
     table_name = table_name if table_name else get_table_name(filename)
