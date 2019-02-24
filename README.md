@@ -1,13 +1,11 @@
+# querycsv-redux
+
 [![Build Status](https://travis-ci.org/kdeloach/querycsv-redux.svg?branch=master)](https://travis-ci.org/kdeloach/querycsv-redux)
 
 Execute SQL code against data contained in one or more comma-separated-value
 (CSV) files.
 
-querycsv.py is a Python module and program that allows you to use SQL
-to extract and summarize data from one or more delimited (e.g., CSV) files.
-
-Syntax and Options
-==================
+## Usage
 ```
 Executes SQL on a delimited text file.
 
@@ -41,8 +39,7 @@ Notes:
       displayed.
 ```
 
-Usage Notes
-===========
+## Usage Notes
   *  The first line of the file should contain the names of the columns.
 
   *  Table names used in the SQL should match the input CSV file names,
@@ -69,3 +66,53 @@ Usage Notes
 
   *  The SQL language features that can be used with querycsv are those
      supported by the Sqlite language (http://www.sqlite.org/lang.html).
+
+## Examples
+```sh
+$ querycsv.py -i FL_insurance_sample.csv "PRAGMA table_info([FL_insurance_sample])"
+ cid | name               | type | notnull | dflt_value | pk
+=============================================================
+ 0   | policyID           |      | 0       | None       | 0
+ 1   | statecode          |      | 0       | None       | 0
+ 2   | county             |      | 0       | None       | 0
+ 3   | eq_site_limit      |      | 0       | None       | 0
+ 4   | hu_site_limit      |      | 0       | None       | 0
+ 5   | fl_site_limit      |      | 0       | None       | 0
+ 6   | fr_site_limit      |      | 0       | None       | 0
+ 7   | tiv_2011           |      | 0       | None       | 0
+ 8   | tiv_2012           |      | 0       | None       | 0
+ 9   | eq_site_deductible |      | 0       | None       | 0
+ 10  | hu_site_deductible |      | 0       | None       | 0
+ 11  | fl_site_deductible |      | 0       | None       | 0
+ 12  | fr_site_deductible |      | 0       | None       | 0
+ 13  | point_latitude     |      | 0       | None       | 0
+ 14  | point_longitude    |      | 0       | None       | 0
+ 15  | line               |      | 0       | None       | 0
+ 16  | construction       |      | 0       | None       | 0
+ 17  | point_granularity  |      | 0       | None       | 0
+ ```
+ ```
+$ querycsv.py -i FL_insurance_sample.csv "select county, count(*) from FL_insurance_sample group by county having count(*) > 1000 order by county"
+ county              | count(*)
+================================
+ BROWARD COUNTY      | 3193
+ DUVAL COUNTY        | 1894
+ HILLSBOROUGH COUNTY | 1166
+ MARION COUNTY       | 1138
+ MIAMI DADE COUNTY   | 4315
+ OKALOOSA COUNTY     | 1115
+ ORANGE COUNTY       | 1811
+ PALM BEACH COUNTY   | 2791
+ PINELLAS COUNTY     | 1774
+ POLK COUNTY         | 1629
+ SEMINOLE COUNTY     | 1100
+ VOLUSIA COUNTY      | 1367
+ ```
+
+## Release Checklist
+1. Update `PKG-INFO` version
+1. Update `querycsv/querycsv.py` version
+1. Update `setup.py` version
+1. Commit version (ex. `4.1.0`)
+1. Tag HEAD (ex. `v4.1.0`)
+1. Push HEAD and tags
