@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: querycsv-redux
-Version: 4.2.0
+Version: 5.0.0
 Summary: Execute SQL code against data contained in one or more comma-separated-value (CSV) files.
 Home-page: https://github.com/kdeloach/querycsv
 Author: Dreas Nielsen
@@ -20,3 +20,4 @@ Classifier: Natural Language :: English
 Classifier: Operating System :: OS Independent
 Classifier: Topic :: Text Processing :: General
 Classifier: Topic :: Office/Business
+Classifier: Programming Language :: Python :: 3.7

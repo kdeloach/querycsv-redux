@@ -23,7 +23,7 @@ def testfile(filename):
 
 def create_csv(filename, content):
     create_test_folder()
-    with open(filename, 'wb') as f:
+    with open(filename, newline='', encoding='utf-8', mode='w') as f:
         writer = csv.writer(f)
         rows = to_csv_rows(content)
         writer.writerows(rows)
@@ -31,7 +31,7 @@ def create_csv(filename, content):
 
 def create_file(filename, content):
     create_test_folder()
-    with open(filename, 'wb') as f:
+    with open(filename, newline='', encoding='utf-8', mode='w') as f:
         f.write(content)
 
 
@@ -75,11 +75,11 @@ class TestQueryFunctions(unittest.TestCase):
     def assertMatch(self, results, content):
         rows = to_csv_rows(content)
         self.assertEqual(len(results), len(rows))
-        for y in xrange(0, len(rows)):
+        for y in range(0, len(rows)):
             rowA = rows[y]
             rowB = results[y]
             self.assertEqual(len(rowA), len(rowB))
-            for x in xrange(0, len(rowA)):
+            for x in range(0, len(rowA)):
                 a = str(rowA[x])
                 b = str(rowB[x])
                 self.assertEqual(a, b)

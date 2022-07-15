@@ -3,13 +3,16 @@ from distutils.core import setup
 
 
 setup(name='querycsv-redux',
-      version='4.2.0',
+      version='5.0.0',
       description="Execute SQL code against data contained in one or more "
                   "comma-separated-value (CSV) files.",
       author='Dreas Nielsen',
       author_email='dreas.nielsen@gmail.com',
       url='https://github.com/kdeloach/querycsv-redux',
       scripts=['querycsv/querycsv.py'],
+      entry_points={
+        'console_scripts': ['querycsv=querycsv:main']
+      },
       packages=['querycsv'],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -19,7 +22,8 @@ setup(name='querycsv-redux',
           'Natural Language :: English',
           'Operating System :: OS Independent',
           'Topic :: Text Processing :: General',
-          'Topic :: Office/Business'
+          'Topic :: Office/Business',
+          'Programming Language :: Python :: 3.7'
       ],
       long_description="""``querycsv.py`` is a Python module and program
 that executes SQL code against data contained in one or more
