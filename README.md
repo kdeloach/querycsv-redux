@@ -1,7 +1,5 @@
 # querycsv-redux
 
-[![Build Status](https://travis-ci.org/kdeloach/querycsv-redux.svg?branch=master)](https://travis-ci.org/kdeloach/querycsv-redux)
-
 Execute SQL code against data contained in one or more comma-separated-value
 (CSV) files.
 

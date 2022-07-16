@@ -3,7 +3,7 @@ from distutils.core import setup
 
 
 setup(name='querycsv-redux',
-      version='5.0.0',
+      version='5.1.0',
       description="Execute SQL code against data contained in one or more "
                   "comma-separated-value (CSV) files.",
       author='Dreas Nielsen',
@@ -23,7 +23,7 @@ setup(name='querycsv-redux',
           'Operating System :: OS Independent',
           'Topic :: Text Processing :: General',
           'Topic :: Office/Business',
-          'Programming Language :: Python :: 3.7'
+          'Programming Language :: Python :: 3.5'
       ],
       long_description="""``querycsv.py`` is a Python module and program
 that executes SQL code against data contained in one or more

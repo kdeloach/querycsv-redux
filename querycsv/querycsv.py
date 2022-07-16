@@ -39,7 +39,7 @@ import sqlite3
 
 from contextlib import contextmanager
 
-VERSION = "5.0.0"
+VERSION = "5.1.0"
 
 
 # Source: Aaron Watters posted to gadfly-rdbms@egroups.com 1999-01-18
@@ -140,7 +140,6 @@ def import_csv(db, filename, table_name=None, overwrite=False):
         if table_exists(conn, table_name) and not overwrite:
             return
 
-        #dialect = csv.Sniffer().sniff(open(filename, 'r').readline())
         with open(filename, newline='', encoding='utf-8') as f:
             dialect = csv.Sniffer().sniff(f.readline())
 
