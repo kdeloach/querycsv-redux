@@ -1,3 +1,5 @@
+![Build Status](https://github.com/kdeloach/querycsv-redux/actions/workflows/python-package.yml/badge.svg)
+
 # querycsv-redux
 
 Execute SQL code against data contained in one or more comma-separated-value
